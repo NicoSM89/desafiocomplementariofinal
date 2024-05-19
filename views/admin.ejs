@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Panel de Administración</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="users">
+            <!-- Contenido cargado dinámicamente -->
+        </tbody>
+    </table>
+
+    <script>
+        // Cargar usuarios al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/users')
+                .then(response => response.json())
+                .then(users => {
+                    const usersTable = document.getElementById('users');
+                    usersTable.innerHTML = '';
+                    users.forEach(user => {
+                        const tr = document.createElement('tr');
+                        
+                        tr.innerHTML = `
+                            <td><input type="text" class="name" value="${user.name}" data-id="${user._id}"></td>
+                            <td><input type="email" class="email" value="${user.email}" data-id="${user._id}"></td>
+                            <td>
+                                <select class="role" data-id="${user._id}">
+                                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                    <option value="premium" ${user.role === 'premium' ? 'selected' : ''}>Premium</option>
+                                    <option value="regular" ${user.role === 'regular' ? 'selected' : ''}>Regular</option>
+                                </select>
+                            </td>
+                            <td>
+                                <button onclick="updateUser('${user._id}')">Guardar</button>
+                                <button onclick="deleteUser('${user._id}')">Eliminar</button>
+                            </td>
+                        `;
+                        
+                        usersTable.appendChild(tr);
+                    });
+                });
+        });
+
+        // Función para actualizar un usuario
+        function updateUser(userId) {
+            const name = document.querySelector(`.name[data-id="${userId}"]`).value;
+            const email = document.querySelector(`.email[data-id="${userId}"]`).value;
+            const role = document.querySelector(`.role[data-id="${userId}"]`).value;
+
+            fetch(`/api/users/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, email, role }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Usuario actualizado');
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        // Función para eliminar un usuario
+        function deleteUser(userId) {
+            if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+                fetch(`/api/users/${userId}`, {
+                    method: 'DELETE',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Usuario eliminado');
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
